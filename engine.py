@@ -1,25 +1,40 @@
 import tdl
+
+from entity import Entity
 from input_handlers import handle_keys
+from map_utils import make_map
+from render_functions import clear_all, render_all
 
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
 
-
 def main():
-    player_x = int(SCREEN_WIDTH / 2)
-    player_y = int(SCREEN_HEIGHT / 2)
+    map_width = 80
+    map_height = 45
+
+    colors = {
+        'dark_wall': (0, 0, 100),
+        'dark_ground': (50, 50, 150)
+    }
+
+    player = Entity(int(SCREEN_WIDTH / 2), int(SCREEN_HEIGHT / 2), '@', (255, 255, 255))
+    npc = Entity(int(SCREEN_WIDTH / 2 - 5), int(SCREEN_HEIGHT / 2), '@', (255, 255, 0))
+
+    entities = [npc, player]
 
     tdl.set_font('arial12x12.png', greyscale=True, altLayout=True)
 
     root_console = tdl.init(SCREEN_WIDTH, SCREEN_HEIGHT, title='Roguelike Tutorial Revised')
     con = tdl.Console(SCREEN_WIDTH, SCREEN_HEIGHT)
 
+    game_map = tdl.map.Map(map_width, map_height)
+    make_map(game_map)
+
     while not tdl.event.is_window_closed():
-        con.draw_char(player_x, player_y, '@', bg=None, fg=(255, 255, 255))
-        root_console.blit(con, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0)
+        render_all(con, entities, game_map, root_console, SCREEN_WIDTH, SCREEN_HEIGHT, colors)
         tdl.flush()
 
-        con.draw_char(player_x, player_y, ' ', bg=None)
+        clear_all(con, entities)
 
         for event in tdl.event.get():
             if event.type == 'KEYDOWN':
@@ -39,8 +54,8 @@ def main():
 
         if move:
             dx, dy = move
-            player_x += dx
-            player_y -= dy
+            if game_map.walkable[player.x + dx, player.y + dy]:
+                player.move(dx, dy)
 
         if exit_action:
             return True
